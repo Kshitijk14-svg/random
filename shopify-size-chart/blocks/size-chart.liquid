@@ -1,0 +1,523 @@
+{%- comment -%}
+  Size chart block for the Shopify Horizon theme.
+
+  Renders a text link (zero top/bottom padding) that opens the size chart
+  image in a responsive modal. An optional separate image can be shown on
+  mobile (e.g. a portrait version of a wide chart).
+{%- endcomment -%}
+
+{%- liquid
+  assign desktop_image = block.settings.image
+  assign mobile_image = block.settings.mobile_image
+  assign dialog_id = 'SizeChart-' | append: block.id
+  assign heading_id = 'SizeChartHeading-' | append: block.id
+
+  assign label = block.settings.link_text | default: 'Size chart'
+  assign heading = block.settings.heading
+
+  assign image_alt = desktop_image.alt | default: heading | default: label
+
+  assign text_color = 'currentColor'
+  if block.settings.text_color != blank and block.settings.text_color.alpha != 0.0
+    assign text_color = block.settings.text_color
+  endif
+
+  capture desktop_sizes
+    echo '(min-width: 750px) min(calc(100vw - 32px), ' | append: block.settings.modal_width | append: 'px), calc(100vw - 16px)'
+  endcapture
+-%}
+
+{%- if desktop_image != blank -%}
+  <size-chart-modal
+    class="size-chart"
+    data-block-id="{{ block.id }}"
+    style="
+      --size-chart-align: {{ block.settings.alignment }};
+      --size-chart-font-size: {{ block.settings.font_size }}px;
+      --size-chart-color: {{ text_color }};
+      --size-chart-decoration: {% if block.settings.underline %}underline{% else %}none{% endif %};
+      --size-chart-modal-width: {{ block.settings.modal_width }}px;
+    "
+    {{ block.shopify_attributes }}
+  >
+    <button
+      type="button"
+      class="size-chart__trigger"
+      aria-haspopup="dialog"
+      aria-controls="{{ dialog_id }}"
+      data-size-chart-open
+    >
+      {%- if block.settings.show_icon -%}
+        <svg
+          class="size-chart__icon"
+          aria-hidden="true"
+          focusable="false"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 8.5h18v7H3z"/>
+          <path d="M7 8.5v3M11 8.5v4M15 8.5v3M19 8.5v4"/>
+        </svg>
+      {%- endif -%}
+      <span class="size-chart__label">{{ label | escape }}</span>
+    </button>
+
+    <dialog
+      id="{{ dialog_id }}"
+      class="size-chart__dialog"
+      {% if heading != blank %}
+        aria-labelledby="{{ heading_id }}"
+      {% else %}
+        aria-label="{{ label | escape }}"
+      {% endif %}
+    >
+      <div class="size-chart__panel">
+        <div class="size-chart__header">
+          {%- if heading != blank -%}
+            <h2 id="{{ heading_id }}" class="size-chart__heading">{{ heading | escape }}</h2>
+          {%- endif -%}
+          <button type="button" class="size-chart__close" aria-label="Close" data-size-chart-close>
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="size-chart__body">
+          <picture>
+            {%- if mobile_image != blank -%}
+              <source
+                media="(max-width: 749px)"
+                srcset="
+                  {{ mobile_image | image_url: width: 500 }} 500w,
+                  {{ mobile_image | image_url: width: 750 }} 750w,
+                  {{ mobile_image | image_url: width: 1000 }} 1000w,
+                  {{ mobile_image | image_url: width: 1500 }} 1500w
+                "
+                sizes="calc(100vw - 16px)"
+                width="{{ mobile_image.width }}"
+                height="{{ mobile_image.height }}"
+              >
+            {%- endif -%}
+            {{
+              desktop_image
+              | image_url: width: 2000
+              | image_tag:
+                widths: '500, 750, 1000, 1200, 1500, 2000',
+                sizes: desktop_sizes,
+                loading: 'lazy',
+                alt: image_alt,
+                class: 'size-chart__image'
+            }}
+          </picture>
+        </div>
+      </div>
+    </dialog>
+  </size-chart-modal>
+{%- elsif request.design_mode -%}
+  <p class="size-chart__placeholder" {{ block.shopify_attributes }}>
+    Size chart: select an image in the block settings to show the link.
+  </p>
+{%- endif -%}
+
+{% stylesheet %}
+  .size-chart {
+    display: flex;
+    justify-content: var(--size-chart-align, flex-start);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* The link itself: zero top & bottom padding, no theme button styling. */
+  .size-chart .size-chart__trigger {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: 0;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    width: auto;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    font-size: var(--size-chart-font-size, 14px);
+    line-height: 1.2;
+    letter-spacing: inherit;
+    text-transform: none;
+    color: var(--size-chart-color, currentColor);
+    cursor: pointer;
+  }
+
+  .size-chart .size-chart__trigger:hover .size-chart__label {
+    text-decoration-thickness: 2px;
+  }
+
+  .size-chart .size-chart__trigger:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  .size-chart__label {
+    text-decoration: var(--size-chart-decoration, underline);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  .size-chart__icon {
+    width: 1.25em;
+    height: 1.25em;
+    flex-shrink: 0;
+  }
+
+  /* Modal */
+  .size-chart__dialog {
+    box-sizing: border-box;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    width: min(calc(100vw - 32px), var(--size-chart-modal-width, 900px));
+    max-width: none;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow: hidden;
+    background: #fff;
+    color: #121212;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.25);
+  }
+
+  .size-chart__dialog[open] {
+    animation: size-chart-in 0.2s ease-out;
+  }
+
+  .size-chart__dialog::backdrop {
+    background: rgb(0 0 0 / 0.6);
+  }
+
+  .size-chart__dialog[open]::backdrop {
+    animation: size-chart-fade 0.2s ease-out;
+  }
+
+  .size-chart__panel {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
+
+  .size-chart__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 12px 12px 20px;
+    border-bottom: 1px solid rgb(0 0 0 / 0.1);
+    flex-shrink: 0;
+  }
+
+  .size-chart__heading {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.3;
+  }
+
+  .size-chart .size-chart__close {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 0 auto;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    min-height: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .size-chart .size-chart__close:hover {
+    background: rgb(0 0 0 / 0.06);
+  }
+
+  .size-chart .size-chart__close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .size-chart__close svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .size-chart__body {
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+  }
+
+  .size-chart__body picture {
+    display: block;
+  }
+
+  .size-chart__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+
+  /* Stop the page behind the modal from scrolling. */
+  html:has(.size-chart__dialog[open]) {
+    overflow: hidden;
+  }
+
+  .size-chart__placeholder {
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px dashed currentColor;
+    font-size: 13px;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 749px) {
+    .size-chart__dialog {
+      width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
+      max-height: calc(100dvh - 16px);
+      border-radius: 10px;
+    }
+
+    .size-chart__panel {
+      max-height: calc(100vh - 16px);
+      max-height: calc(100dvh - 16px);
+    }
+
+    .size-chart__header {
+      padding: 8px 8px 8px 16px;
+    }
+
+    .size-chart__heading {
+      font-size: 1rem;
+    }
+
+    .size-chart__body {
+      padding: 12px;
+    }
+  }
+
+  @keyframes size-chart-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes size-chart-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .size-chart__dialog[open],
+    .size-chart__dialog[open]::backdrop {
+      animation: none;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  if (!customElements.get('size-chart-modal')) {
+    class SizeChartModal extends HTMLElement {
+      connectedCallback() {
+        this.dialog = this.querySelector('dialog');
+        this.trigger = this.querySelector('[data-size-chart-open]');
+        if (!this.dialog || !this.trigger) return;
+
+        this.abortController = new AbortController();
+        const { signal } = this.abortController;
+
+        this.trigger.addEventListener('click', () => this.open(), { signal });
+
+        // Start loading the (lazy) image as soon as the shopper shows intent.
+        this.trigger.addEventListener('pointerenter', () => this.preload(), { signal, once: true });
+        this.trigger.addEventListener('focus', () => this.preload(), { signal, once: true });
+
+        // Close on the X button or on a click on the backdrop.
+        this.dialog.addEventListener(
+          'click',
+          (event) => {
+            if (event.target === this.dialog || event.target.closest('[data-size-chart-close]')) {
+              this.close();
+            }
+          },
+          { signal }
+        );
+
+        // Theme editor: preview the modal while the block is selected.
+        document.addEventListener(
+          'shopify:block:select',
+          (event) => {
+            if (event.detail && event.detail.blockId === this.dataset.blockId) this.open();
+          },
+          { signal }
+        );
+        document.addEventListener(
+          'shopify:block:deselect',
+          (event) => {
+            if (event.detail && event.detail.blockId === this.dataset.blockId) this.close();
+          },
+          { signal }
+        );
+      }
+
+      disconnectedCallback() {
+        if (this.abortController) this.abortController.abort();
+        if (this.dialog && this.dialog.open) this.close();
+      }
+
+      preload() {
+        this.dialog.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+          img.loading = 'eager';
+        });
+      }
+
+      open() {
+        if (this.dialog.open) return;
+        this.preload();
+        if (typeof this.dialog.showModal === 'function') {
+          this.dialog.showModal();
+        } else {
+          this.dialog.setAttribute('open', '');
+        }
+      }
+
+      close() {
+        if (typeof this.dialog.close === 'function') {
+          this.dialog.close();
+        } else {
+          this.dialog.removeAttribute('open');
+        }
+      }
+    }
+
+    customElements.define('size-chart-modal', SizeChartModal);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Size chart",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Size chart image",
+      "info": "The link only shows when an image is selected. Connect this to a product metafield to use a different chart per product."
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "Mobile image (optional)",
+      "info": "Shown on screens under 750px wide. Useful for a taller, narrower version of a wide chart."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Modal heading",
+      "default": "Size chart"
+    },
+    {
+      "type": "range",
+      "id": "modal_width",
+      "label": "Modal max width (desktop)",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "unit": "px",
+      "default": 900
+    },
+    {
+      "type": "header",
+      "content": "Link"
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "Link text",
+      "default": "Size chart"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon",
+      "label": "Show ruler icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "underline",
+      "label": "Underline text",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "info": "Leave empty to match the surrounding text."
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "flex-start", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Right" }
+      ],
+      "default": "flex-start"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Size chart"
+    }
+  ]
+}
+{% endschema %}
