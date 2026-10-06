@@ -1,0 +1,33 @@
+{
+  "name": "Size chart",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "size_chart_image",
+      "label": "Size chart image",
+      "info": "Shared by every product. The Size chart link is hidden until an image is selected."
+    },
+    {
+      "type": "image_picker",
+      "id": "size_chart_mobile_image",
+      "label": "Mobile image (optional)",
+      "info": "Shown on screens under 750px wide. Useful for a taller, narrower version of a wide chart."
+    },
+    {
+      "type": "text",
+      "id": "size_chart_heading",
+      "label": "Modal heading",
+      "default": "Size chart"
+    },
+    {
+      "type": "range",
+      "id": "size_chart_modal_width",
+      "label": "Modal max width (desktop)",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "unit": "px",
+      "default": 900
+    }
+  ]
+}
