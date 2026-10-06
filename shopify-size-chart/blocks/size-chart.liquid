@@ -1,5 +1,5 @@
 {%- comment -%}
-  Size chart section for the Shopify Horizon theme.
+  Size chart block for the Shopify Horizon theme.
 
   Renders a text link (zero top/bottom padding) that opens the store-wide
   size chart image in a responsive modal. The image, optional mobile image,
@@ -13,15 +13,15 @@
   assign heading = settings.size_chart_heading
   assign modal_width = settings.size_chart_modal_width | default: 900
 
-  assign dialog_id = 'SizeChart-' | append: section.id
-  assign heading_id = 'SizeChartHeading-' | append: section.id
+  assign dialog_id = 'SizeChart-' | append: block.id
+  assign heading_id = 'SizeChartHeading-' | append: block.id
 
-  assign label = section.settings.link_text | default: 'Size chart'
+  assign label = block.settings.link_text | default: 'Size chart'
   assign image_alt = desktop_image.alt | default: heading | default: label
 
   assign text_color = 'currentColor'
-  if section.settings.text_color != blank and section.settings.text_color.alpha != 0.0
-    assign text_color = section.settings.text_color
+  if block.settings.text_color != blank and block.settings.text_color.alpha != 0.0
+    assign text_color = block.settings.text_color
   endif
 
   capture desktop_sizes
@@ -31,15 +31,16 @@
 
 {%- if desktop_image != blank -%}
   <size-chart-modal
-    class="size-chart{% if section.settings.width == 'page' %} size-chart--page-width{% endif %}"
-    data-section-id="{{ section.id }}"
+    class="size-chart"
+    data-block-id="{{ block.id }}"
     style="
-      --size-chart-align: {{ section.settings.alignment }};
-      --size-chart-font-size: {{ section.settings.font_size }}px;
+      --size-chart-align: {{ block.settings.alignment }};
+      --size-chart-font-size: {{ block.settings.font_size }}px;
       --size-chart-color: {{ text_color }};
-      --size-chart-decoration: {% if section.settings.underline %}underline{% else %}none{% endif %};
+      --size-chart-decoration: {% if block.settings.underline %}underline{% else %}none{% endif %};
       --size-chart-modal-width: {{ modal_width }}px;
     "
+    {{ block.shopify_attributes }}
   >
     <button
       type="button"
@@ -48,7 +49,7 @@
       aria-controls="{{ dialog_id }}"
       data-size-chart-open
     >
-      {%- if section.settings.show_icon -%}
+      {%- if block.settings.show_icon -%}
         <svg
           class="size-chart__icon"
           aria-hidden="true"
@@ -120,18 +121,12 @@
     </dialog>
   </size-chart-modal>
 {%- elsif request.design_mode -%}
-  <p class="size-chart__placeholder">
+  <p class="size-chart__placeholder" {{ block.shopify_attributes }}>
     Size chart: add an image in Theme settings &rarr; Size chart to show the link.
   </p>
 {%- endif -%}
 
 {% stylesheet %}
-  /* Section wrapper: no vertical spacing of its own. */
-  .shopify-section.size-chart-section {
-    margin-block: 0;
-    padding-block: 0;
-  }
-
   .size-chart {
     display: flex;
     justify-content: var(--size-chart-align, flex-start);
@@ -139,12 +134,6 @@
     margin: 0;
     padding-block: 0;
     box-sizing: border-box;
-  }
-
-  .size-chart--page-width {
-    max-width: var(--page-width, 1200px);
-    margin-inline: auto;
-    padding-inline: var(--page-margin, 20px);
   }
 
   /* The link itself: zero top & bottom padding, no theme button styling. */
@@ -301,8 +290,7 @@
   }
 
   .size-chart__placeholder {
-    margin: 0 auto;
-    max-width: var(--page-width, 1200px);
+    margin: 0;
     padding: 8px 12px;
     border: 1px dashed currentColor;
     font-size: 13px;
@@ -391,18 +379,18 @@
           { signal }
         );
 
-        // Theme editor: preview the modal while the section is selected.
+        // Theme editor: preview the modal while the block is selected.
         document.addEventListener(
-          'shopify:section:select',
+          'shopify:block:select',
           (event) => {
-            if (event.detail && event.detail.sectionId === this.dataset.sectionId) this.open();
+            if (event.detail && event.detail.blockId === this.dataset.blockId) this.open();
           },
           { signal }
         );
         document.addEventListener(
-          'shopify:section:deselect',
+          'shopify:block:deselect',
           (event) => {
-            if (event.detail && event.detail.sectionId === this.dataset.sectionId) this.close();
+            if (event.detail && event.detail.blockId === this.dataset.blockId) this.close();
           },
           { signal }
         );
@@ -445,8 +433,7 @@
 {% schema %}
 {
   "name": "Size chart",
-  "tag": "div",
-  "class": "size-chart-section",
+  "tag": null,
   "settings": [
     {
       "type": "paragraph",
@@ -496,16 +483,6 @@
         { "value": "flex-end", "label": "Right" }
       ],
       "default": "flex-start"
-    },
-    {
-      "type": "select",
-      "id": "width",
-      "label": "Width",
-      "options": [
-        { "value": "page", "label": "Page" },
-        { "value": "full", "label": "Full" }
-      ],
-      "default": "page"
     }
   ],
   "presets": [
